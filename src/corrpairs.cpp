@@ -70,7 +70,9 @@ bool CorrPairs::writePairs() {
         std::cerr << "Failed to open file." << std::endl;
         return false;
     }
+    std::cout << "Total number of gene pairs: " << pairs.size() << endl;
     char outDelim = Utils::getDelim(options->output);
+    std::cout << "Start writing the results to " << options->output << std::endl;
     outputFile << "feature" << outDelim << "source" << outDelim << "target" << outDelim << \
                 "corr(source" << Utils::getOperation(options->operation) << "target)" << endl;
     for (const auto& pair : pairs) {
@@ -79,5 +81,6 @@ bool CorrPairs::writePairs() {
 
     // 关闭文件
     outputFile.close();
+    std::cout << "Writing is completed." << std::endl;
     return true;
 }

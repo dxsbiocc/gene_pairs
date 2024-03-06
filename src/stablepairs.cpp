@@ -98,13 +98,15 @@ bool StablePairs::writePairs() {
         std::cerr << "Failed to open file." << std::endl;
         return false;
     }
+    std::cout << "Total number of gene pairs: " << pairs.size() << endl;
     char outDelim = Utils::getDelim(options->output);
+    std::cout << "Start writing the results to " << options->output << std::endl;
     outputFile << "source" << outDelim << "target" << outDelim << "ratio(source>target)" << outDelim << "reverse(source<target)\n";
     for (const auto& pair : pairs) {
-        outputFile << std::get<0>(pair) << outDelim << std::get<1>(pair) << outDelim << std::get<2>(pair) << "\n";
+        outputFile << std::get<0>(pair) << outDelim << std::get<1>(pair) << outDelim << std::get<2>(pair) << outDelim << std::get<3>(pair) << "\n";
     }
-
     // 关闭文件
     outputFile.close();
+    std::cout << "Writing is completed." << std::endl;
     return true;
 }

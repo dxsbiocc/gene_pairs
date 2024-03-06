@@ -61,26 +61,18 @@ int main(int argc, char* argv[]) {
     // stable
     if (stable_pairs->parsed()) {
         StablePairs* sp = new StablePairs(stableopt);
-
         if (sp->getPairs()) {
-            std::cout << "Successfully calculated stable gene pairs.\n";
-            std::cout << "Total number of gene pairs: " << sp->pairs.size() << endl;
             sp->writePairs();
-            std::cout << "Stable gene pairs have been writed to " << stableopt->output << std::endl;
         } else {
             std::cout << "Stable gene pair calculation error!\n";
         }
-
         delete stableopt;
     }
     // corr
     if (corr_pairs->parsed()) {
         CorrPairs* cp = new CorrPairs(corropt);
         if (cp->getPairs()) {
-            std::cout << "Successfully calculated correlation gene pairs.\n";
-            std::cout << "Total number of gene pairs: " << cp->pairs.size() << endl;
             cp->writePairs();
-            std::cout << "Correlation gene pairs have been writed to " << corropt->output << std::endl;
         } else {
             std::cout << "Correlation gene pair calculation error!\n";
         }
