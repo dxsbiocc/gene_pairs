@@ -26,7 +26,3 @@ $(BINDIR)/%.o: $(SRCDIR)/%.cpp
 
 clean:
 	$(RM) -f $(OBJS) $(EXEC)
-
-# corrpairs.o: corrpairs.h utils.h algorithm.h dataframe.h
-# stablepairs.o: stablepairs.h utils.h dataframe.h
-# DataFrame.o: DataFrame.h 

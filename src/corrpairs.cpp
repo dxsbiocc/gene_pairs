@@ -40,9 +40,9 @@ bool CorrPairs::getPairs() {
     }
 
     for (int i = 0; i < target->data.cols(); ++i) {
+        std::cout << "Calulate feature: " << target->columns[i] << std::endl;
         getPairsOne(source, target->data.col(i), target->columns[i]);
     }
-
     return true;
 }
 
@@ -70,13 +70,13 @@ bool CorrPairs::writePairs() {
         std::cerr << "Failed to open file." << std::endl;
         return false;
     }
-    std::cout << "Total number of gene pairs: " << pairs.size() << endl;
+    std::cout << "Total number of gene pairs: " << pairs.size() << std::endl;
     char outDelim = Utils::getDelim(options->output);
     std::cout << "Start writing the results to " << options->output << std::endl;
     outputFile << "feature" << outDelim << "source" << outDelim << "target" << outDelim << \
-                "corr(source" << Utils::getOperation(options->operation) << "target)" << endl;
+                "corr(source" << Utils::getOperation(options->operation) << "target)" << std::endl;
     for (const auto& pair : pairs) {
-        outputFile << std::get<0>(pair) << outDelim << std::get<1>(pair) << outDelim << std::get<2>(pair) << outDelim << std::get<3>(pair)<< "\n";
+        outputFile << std::get<0>(pair) << outDelim << std::get<1>(pair) << outDelim << std::get<2>(pair) << outDelim << std::get<3>(pair)<< std::endl;
     }
 
     // 关闭文件
