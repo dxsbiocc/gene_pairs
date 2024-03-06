@@ -80,8 +80,11 @@ bool StablePairs::getPairsReverse() {
  * @return false 
  */
 bool StablePairs::getPairs() {
-    
-    return true;
+    if (reverse) {
+        return getPairsReverse();
+    } else {
+        return getPairsStable();
+    }
 }
 /**
  * @brief Write gene pairs to file
