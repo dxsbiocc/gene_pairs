@@ -2,7 +2,7 @@ CC := g++
 MD := mkdir
 RM := rm
 
-INCLUDE = -I /usr/local/include/eigen3 -I /usr/local/include/CLI
+INCLUDE = -I /usr/local/include/eigen3 -I /usr/local/include
 CFLAGS = -std=c++17 $(INCLUDE)
 
 SRCDIR = src

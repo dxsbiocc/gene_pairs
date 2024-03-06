@@ -1,15 +1,17 @@
-# Gene Paires
+# Gene Pairs Analysis
 
 ## Table of Contents
 
-- [Gene Paires](#gene-paires)
+- [Gene Pairs](#gene-pairs-analysis)
   - [Introduction](#introduction)
   - [Install](#install)
   - [Uasge](#usage)
 
 ## Introduction
 
-## install
+Gene pairs with a stable relationship in the sample, which can be gene expression data, or correlations between gene expression and drug sensitivity (or other data).
+
+## Install
 
 ### Eigen
 

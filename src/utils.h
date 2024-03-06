@@ -8,10 +8,13 @@
 #endif
 
 #include <map>
+#include <ctime>
+#include <vector>
 #include <string>
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <algorithm>
 #include <sys/stat.h>
 
 
@@ -32,6 +35,8 @@ namespace Utils{
                 return '*';
             case Operation::DIVIDE:
                 return '/';
+            default:
+                throw std::invalid_argument("operation must be: +,-,*,/.");
         }
     }
 

@@ -1,10 +1,10 @@
 #include <map>
 #include <iostream>
 
-#include <CLI.hpp>
-#include <Validators.hpp>
+#include <CLI/CLI.hpp>
+#include <CLI/Validators.hpp>
 
-#include "util.h"
+#include "utils.h"
 #include "corrpairs.h"
 #include "stablepairs.h"
 
@@ -39,8 +39,10 @@ int main(int argc, char* argv[]) {
     StableOptions *stableopt = new StableOptions();
     CLI::App *stable_pairs = app.add_subcommand("stable", "stable gene pairs");
     stable_pairs->add_option("-i,--input", stableopt->expression, "gene expression filename")->check(CLI::ExistingFile)->required(true);
+    stable_pairs->add_option("-t,--target", stableopt->target, "gene expression filename for calculate reverse gene pairs")->check(CLI::ExistingFile);
     stable_pairs->add_option("-o,--output", stableopt->output, "output filename");
     stable_pairs->add_option("-r,--ratio", stableopt->ratio, "The ratio of gene a > gene b in all samples.");
+    stable_pairs->add_option("--revRatio", stableopt->revRatio, "The ratio of gene a < gene b in another samples.");
     // correlation
     CorrOptions *corropt = new CorrOptions();
     CLI::App *corr_pairs = app.add_subcommand("corr", "correlation gene pairs");
