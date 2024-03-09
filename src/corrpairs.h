@@ -2,36 +2,52 @@
 #define CORRPAIRS_H
 
 #include <string>
+#include <functional>
+
+#include <omp.h>
 
 #include "utils.h"
+#include "timer.h"
 #include "algorithm.h"
 #include "dataframe.h"
-
 
 struct CorrOptions
 {
     std::string expression;
-    std::string target = "";
-    std::string output = "output.csv";
-    Utils::Method method = Utils::Method::PEARSON;
-    Utils::Operation operation = Utils::Operation::SUBTRACT;
+    std::string target;
+    std::string output;
+    std::string method;
+    std::string operation;
+    std::string analysis;
     double threshold = 0.3;
+    size_t block = 0;
+    size_t threads = 2;
 };
 
 class CorrPairs
 {
 private:
     /* data */
+    bool getCrossPairs();
+    bool getPairsCross();
+    bool getCommonPairs();
+
+    // function pointer
+    std::function<double(const VectorXd&, const VectorXd&)> func;
+
+    int threshold;
+
 public:
+    DataFrame *source = nullptr;
+    DataFrame *target = nullptr;
     // feature, source, target, corr
-    std::vector<std::tuple<std::string, std::string, std::string, double>> pairs;
-    CorrOptions* options;
+    std::vector<std::vector<int> > pairs;
+    CorrOptions *options;
 
     CorrPairs();
     CorrPairs(CorrOptions *opts);
     ~CorrPairs();
 
-    void getPairsOne(DataFrame* source, const VectorXd& vec, const string &vec_name);
     bool getPairs();
     bool writePairs();
 };

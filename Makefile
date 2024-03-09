@@ -1,9 +1,11 @@
-CC := g++
+CC := gcc
+CXX := g++
 MD := mkdir
 RM := rm
 
-INCLUDE = -I /usr/local/include/eigen3 -I /usr/local/include
-CFLAGS = -std=c++17 $(INCLUDE)
+INCLUDE = -I /usr/local/include/eigen3 -I /usr/local/include -I /usr/local/opt/libomp/include
+LIBRARY = -L /usr/local/opt/llvm/lib
+CXXFLAGS = -std=c++17 -Xclang -fopenmp -lomp -O3 $(LIBRARY) $(INCLUDE)
 
 SRCDIR = src
 BINDIR = bin
@@ -19,10 +21,10 @@ $(BINDIR):
 	$(MD) -p $(BINDIR)
 	
 $(EXEC): $(OBJS)
-	$(CC) $(CFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $^ -o $@
 	
 $(BINDIR)/%.o: $(SRCDIR)/%.cpp
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
 	$(RM) -f $(OBJS) $(EXEC)

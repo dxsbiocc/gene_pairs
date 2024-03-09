@@ -4,31 +4,17 @@
 #include "algorithm.h"
 
 // 定义列之间的算术运算函数
-VectorXd Algorithm::column_operate(const MatrixXd& matrix, int col1, int col2, Utils::Operation op) {
-    switch (op) {
-        case Utils::Operation::ADD:
-            return matrix.col(col1) + matrix.col(col2);
-        case Utils::Operation::SUBTRACT:
-            return matrix.col(col1) - matrix.col(col2);
-        case Utils::Operation::MULTIPLY:
-            return matrix.col(col1).array() * matrix.col(col2).array();
-        case Utils::Operation::DIVIDE:
-            return matrix.col(col1).array() / matrix.col(col2).array();
-        default:
-            throw std::invalid_argument("Invalid operation");
-    }
-}
-
-double Algorithm::correlation(const VectorXd& x, const VectorXd& y, Utils::Method method) {
-    switch (method) {
-        case Utils::Method::PEARSON:
-            return pearson(x, y);
-        case Utils::Method::SPEARMAN:
-            return spearman(x, y);
-        case Utils::Method::KENDALL:
-            return kendall(x, y);
-        default:
-            throw std::invalid_argument("Invalid method");
+VectorXd Algorithm::column_operate(const MatrixXd& matrix, int col1, int col2, std::string op) {
+    if (op == "add") {
+        return matrix.col(col1) + matrix.col(col2);
+    } else if (op == "subtract") {
+        return matrix.col(col1) - matrix.col(col2);
+    } else if (op == "multiply") {
+        return matrix.col(col1).array() * matrix.col(col2).array();
+    } else if (op == "divide") {
+        return matrix.col(col1).array() / matrix.col(col2).array();
+    } else {
+        throw std::invalid_argument("Invalid operation");
     }
 }
 

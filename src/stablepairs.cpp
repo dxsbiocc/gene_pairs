@@ -5,13 +5,37 @@ StablePairs::StablePairs() {
 }
 StablePairs::StablePairs(StableOptions *opts) {
     options = opts;
-    if (Utils::exists(options->target)) {
-        reverse = true;
+    source = new DataFrame(options->expression);
+    srows = source->data.rows();
+    lowerBound = static_cast<int>(std::ceil(options->ratio * srows));
+
+    if (options->block < 10) {
+        options->block = source->data.cols();
+    }
+
+    if(!options->target.empty() and Utils::exists(options->target)) {
+        target = new DataFrame(options->target);
+        trows = target->data.rows();
+        reverseBound = static_cast<int>(std::ceil(options->revRatio * trows));
+    }
+
+    if (options->output.empty()) {
+        options->output = Utils::dirname(options->expression) + "/output.txt";
     }
 }
 StablePairs::~StablePairs() {
-    if (options)
+    if (options != nullptr) {
         delete options;
+        options = nullptr;  
+    } 
+    if (source != nullptr) {
+        delete source;
+        source = nullptr;
+    }
+    if (target != nullptr) {
+        delete target;
+        target = nullptr;
+    }
 }
 
 /**
@@ -21,24 +45,27 @@ StablePairs::~StablePairs() {
  * @return false 
  */
 bool StablePairs::getPairsStable() {
-    DataFrame* source = new DataFrame(options->expression);
-
     if (source->data.rows() == 0) {
-        std::cout << "Expression file is empty." << std::endl;
+        std::cout << "[Stable Pairs] - Expression file is empty." << std::endl;
         return false;
     }
-
-    for (int i = 0; i < source->data.cols(); ++i) {
-        for (int j = i + 1; j < source->data.cols(); ++j) {
-            double ratio = (source->data.col(i).array() > source->data.col(j).array()).cast<double>().mean();
-            if (ratio > options->ratio) {
-                pairs.push_back(std::make_tuple(source->columns[i], source->columns[j], ratio, 0.0));
-            } else if (1 - ratio > options->ratio) {
-                pairs.push_back(std::make_tuple(source->columns[j], source->columns[i], 1 - ratio, 0.0));
+    std::cout << "[Stable Pairs] - Begin the search for stable gene pairs." << std::endl;
+    int i, j, count;
+    omp_set_num_threads(options->threads);
+    #pragma omp parallel for collapse(2) private(i, j, count) schedule(static, options->block)
+    for (i = 0; i < source->data.cols(); ++i) {
+        for (j = i + 1; j < source->data.cols(); ++j) {
+            count = (source->data.col(i).array() > source->data.col(j).array()).count();
+            if (count > lowerBound) {
+                #pragma omp critical
+                pairs.push_back({i, j, count});
+            } else if (srows - count > lowerBound) {
+                #pragma omp critical
+                pairs.push_back({j, i, srows - count});
             }
         }
     }
-    std::cout << "Successfully calculated all stable gene pairs." << std::endl;
+    std::cout << "[Stable Pairs] - Successfully calculated all stable gene pairs." << std::endl;
     return true;
 }
 
@@ -49,30 +76,32 @@ bool StablePairs::getPairsStable() {
  * @return false 
  */
 bool StablePairs::getPairsReverse() {
-    DataFrame* source = new DataFrame(options->expression);
-
-    assert(Utils::exists(options->target));
-    DataFrame* target = new DataFrame(options->target);
-
     if (source->data.rows() == 0 || target->data.rows() == 0) {
-        std::cout << "Expression file or target file is empty." << std::endl;
+        std::cout << "[Stable Pairs] - Expression file or target file is empty." << std::endl;
         return false;
     }
 
-    for (int i = 0; i < source->data.cols(); ++i) {
-        for (int j = i + 1; j < source->data.cols(); ++j) {
-            double ratio = (source->data.col(i).array() > source->data.col(j).array()).cast<double>().mean();
-            double rev = (target->data.col(i).array() < target->data.col(j).array()).cast<double>().mean();
-            if (ratio > options->ratio && rev > options->revRatio) {
-                pairs.push_back(std::make_tuple(source->columns[i], source->columns[j], ratio, rev));
-            } else if (1 - ratio > options->ratio && 1 - rev > options->revRatio) {
-                pairs.push_back(std::make_tuple(source->columns[j], source->columns[i], 1 - ratio, 1 - rev));
+    std::cout << "[Stable Pairs] - Begin the search for stable and reversed gene pairs." << std::endl;
+    omp_set_num_threads(options->threads);
+    int i, j, percent, rev;
+    #pragma omp parallel for collapse(2) private(i, j, percent, rev) schedule(static, options->block)
+    for (i = 0; i < source->data.cols(); ++i) {
+        for (j = i + 1; j < source->data.cols(); ++j) {
+            percent = (source->data.col(i).array() > source->data.col(j).array()).count();
+            rev = (target->data.col(i).array() < target->data.col(j).array()).count();
+            if (percent > lowerBound && rev > reverseBound) {
+                #pragma omp critical
+                pairs.push_back({i, j, percent, rev});
+            } else if (srows - percent > lowerBound && trows - rev > reverseBound) {
+                #pragma omp critical
+                pairs.push_back({j, i, srows - percent, trows - rev});
             }
         }
     }
-    std::cout << "Successfully calculated all stable and reverse gene pairs." << std::endl;
+    std::cout << "[Stable Pairs] - Successfully calculated all stable and reverse gene pairs." << std::endl;
     return true;
 }
+
 /**
  * @brief Find stable gene pairs
  * 
@@ -80,12 +109,17 @@ bool StablePairs::getPairsReverse() {
  * @return false 
  */
 bool StablePairs::getPairs() {
-    if (reverse) {
-        return getPairsReverse();
+    bool success;
+    Timer timer = Timer();
+    if (target != nullptr) {
+        success = getPairsReverse();
     } else {
-        return getPairsStable();
+        success = getPairsStable();
     }
+    std::cout << "[Stable Pairs] - The calculation time is: " << timer << std::endl;
+    return success;
 }
+
 /**
  * @brief Write gene pairs to file
  * 
@@ -95,18 +129,25 @@ bool StablePairs::getPairs() {
 bool StablePairs::writePairs() {
     std::ofstream outputFile(options->output);
     if (!outputFile.is_open()) {
-        std::cerr << "Failed to open file." << std::endl;
+        std::cerr << "[Stable Pairs] - Failed to open file." << std::endl;
         return false;
     }
-    std::cout << "Total number of gene pairs: " << pairs.size() << endl;
+    std::cout << "[Stable Pairs] - Total number of gene pairs: " << pairs.size() << std::endl;
     char outDelim = Utils::getDelim(options->output);
-    std::cout << "Start writing the results to " << options->output << std::endl;
+    std::cout << "[Stable Pairs] - Start writing the results to " << options->output << std::endl;
     outputFile << "source" << outDelim << "target" << outDelim << "ratio(source>target)" << outDelim << "reverse(source<target)\n";
-    for (const auto& pair : pairs) {
-        outputFile << std::get<0>(pair) << outDelim << std::get<1>(pair) << outDelim << std::get<2>(pair) << outDelim << std::get<3>(pair) << "\n";
+    if (target != nullptr) {
+        for (const auto& pair : pairs) {
+            outputFile << source->columns[pair[0]] << outDelim << source->columns[pair[1]] << outDelim << 1.0 * pair[2] / srows \
+                << outDelim << 1.0 * pair[3] / trows << "\n";
+        }
+    } else {
+        for (const auto& pair : pairs) {
+            outputFile << source->columns[pair[0]] << outDelim << source->columns[pair[1]] << outDelim << 1.0 * pair[2] / srows << outDelim << "0\n";
+        }
     }
     // 关闭文件
     outputFile.close();
-    std::cout << "Writing is completed." << std::endl;
+    std::cout << "[Stable Pairs] - Writing is completed." << std::endl;
     return true;
 }

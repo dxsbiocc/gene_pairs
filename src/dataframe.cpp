@@ -80,6 +80,7 @@ bool DataFrame::read_csv(const std::string &filename, const char delimiter, bool
     file.close();
     std::cout << "File reading completed." << std::endl;
     this->max_index_length = max(static_cast<int>(this->index_name.length()), this->max_index_length);
+    std::cout << "Data size: " << nrows << "x" << ncols << std::endl;
     return true;
 }
 

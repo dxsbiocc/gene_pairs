@@ -20,23 +20,18 @@
 
 namespace Utils{
 
-    // vars
-    enum class Operation { ADD, SUBTRACT, MULTIPLY, DIVIDE };
-    enum class Method { PEARSON, SPEARMAN, KENDALL };
-
     // functions
-    inline char getOperation(Operation op) {
-        switch (op) {
-            case Operation::ADD:
-                return '+';
-            case Operation::SUBTRACT:
-                return '-';
-            case Operation::MULTIPLY:
-                return '*';
-            case Operation::DIVIDE:
-                return '/';
-            default:
-                throw std::invalid_argument("operation must be: +,-,*,/.");
+    inline char getOperation(std::string op) {
+        if (op == "add") {
+            return '+';
+        } else if (op == "subtract") {
+            return '-';
+        } else if (op == "multiply") {
+            return '*';
+        } else if (op == "divide") {
+            return '/';
+        } else {
+            throw std::invalid_argument("Invalid operation");
         }
     }
 

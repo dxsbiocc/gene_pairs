@@ -23,8 +23,7 @@ namespace Algorithm {
     double spearman(const VectorXd& x, const VectorXd& y);
     double pearson(const VectorXd& x, const VectorXd& y);
     double kendall(const VectorXd& x, const VectorXd& y);
-    double correlation(const VectorXd& x, const VectorXd& y, Utils::Method method);
 
-    VectorXd column_operate(const MatrixXd& matrix, int col1, int col2, Utils::Operation op);
+    VectorXd column_operate(const MatrixXd& matrix, int col1, int col2, std::string op);
 }
 #endif
