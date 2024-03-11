@@ -54,7 +54,8 @@ bool StablePairs::getPairsStable() {
     omp_set_num_threads(options->threads);
     #pragma omp parallel for collapse(2) private(i, j, count) schedule(static, options->block)
     for (i = 0; i < source->data.cols(); ++i) {
-        for (j = i + 1; j < source->data.cols(); ++j) {
+        for (j = 0; j < source->data.cols(); ++j) {
+            if (j <= i) continue;
             count = (source->data.col(i).array() > source->data.col(j).array()).count();
             if (count > lowerBound) {
                 #pragma omp critical
@@ -86,7 +87,8 @@ bool StablePairs::getPairsReverse() {
     int i, j, percent, rev;
     #pragma omp parallel for collapse(2) private(i, j, percent, rev) schedule(static, options->block)
     for (i = 0; i < source->data.cols(); ++i) {
-        for (j = i + 1; j < source->data.cols(); ++j) {
+        for (j = 0; j < source->data.cols(); ++j) {
+            if (j <= i) continue;
             percent = (source->data.col(i).array() > source->data.col(j).array()).count();
             rev = (target->data.col(i).array() < target->data.col(j).array()).count();
             if (percent > lowerBound && rev > reverseBound) {

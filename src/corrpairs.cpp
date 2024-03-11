@@ -76,7 +76,8 @@ bool CorrPairs::getCommonPairs() {
     omp_set_num_threads(options->threads);
     #pragma omp parallel for collapse(2) private(i, j, corr) schedule(static, options->block)
     for (i = 0; i < source->data.cols(); ++i) {
-        for (j = i + 1; j < source->data.cols(); ++j) {
+        for (j = 0; j < source->data.cols(); ++j) {
+            if (j <= i) continue;
             corr = static_cast<int>(std::round(func(source->data.col(i), source->data.col(j)) * 1000));
             if (abs(corr) > threshold) {
                 #pragma omp critical
@@ -129,16 +130,19 @@ bool CorrPairs::getPairsCross() {
     if (source->data.rows() != target->data.rows()) {
         return false;
     }
-    int i, j;
+    int k, i, j;
     VectorXd res;
     int corr;
     omp_set_num_threads(options->threads);
-    #pragma omp parallel for collapse(2) private(i, j, res, corr) schedule(static, options->block)
-    for (int k = 0; k < target->data.cols(); ++k) {
+    #pragma omp parallel for collapse(3) private(k, i, j, res, corr) schedule(static, options->block)
+    for (k = 0; k < target->data.cols(); ++k) {
         for (i = 0; i < source->data.cols(); ++i) {
-            for (j = i + 1; j < source->data.cols(); ++j) {
-                if (i == 0 && j == 1)
+            for (j = 0; j < source->data.cols(); ++j) {
+                if (j <= i) continue;
+                if (i == 0 && j == 1) {
+                    #pragma omp critical
                     std::cout << "[Pairs Cross] - Feature: " << target->columns[k] << std::endl;
+                }
                 res = Algorithm::column_operate(source->data, i, j, options->operation);
                 corr = static_cast<int>(std::round(func(res, target->data.col(k)) * 1000));
                 if (!isnan(corr) && abs(corr) > threshold)
