@@ -43,8 +43,6 @@ bool DataFrame::read_csv(const std::string &filename, const char delimiter, bool
     }
     // read data from file
     std::string line;
-    int row_offset = header ? 1 : 0;
-    int col_offset = index ? 1 : 0;
     int row_index = -1;
     this->data.resize(nrows, ncols);
     this->data.setZero();
@@ -53,9 +51,9 @@ bool DataFrame::read_csv(const std::string &filename, const char delimiter, bool
         if (line.empty()) {
             continue; // 跳过此行
         }
-        stringstream ss(Utils::rstrip(line));
+        std::string striped = Utils::rstrip(line, "\n\r");
+        stringstream ss(striped);
         string cell;
-        vector<double> row_data;
         int col_index = -1;
         while (getline(ss, cell, delimiter)) {
             if (row_index == -1 && header) {
@@ -67,14 +65,15 @@ bool DataFrame::read_csv(const std::string &filename, const char delimiter, bool
                 this->max_index_length = max(this->max_index_length, static_cast<int>(cell.length()));
             } else {
                 if (cell.empty()) {
-                    this->data(row_index, col_index) = std::numeric_limits<double>::quiet_NaN();
+                    this->data(row_index, col_index) = NAN;
                 } else {
                     this->data(row_index, col_index) = stod(cell);
                 }
             }
             col_index++;
         }
-        header = false;
+        if (striped[striped.size() - 1] == delimiter)
+            this->data(row_index, col_index) = NAN;
         row_index++;
     }
     file.close();
@@ -84,6 +83,30 @@ bool DataFrame::read_csv(const std::string &filename, const char delimiter, bool
     return true;
 }
 
+bool DataFrame::to_csv(const std::string &filename, const char delimiter, bool header, bool index) {
+    std::ofstream outputFile(filename);
+    if (!outputFile.is_open()) {
+        std::cerr << "[Stable Pairs] - Failed to open file." << std::endl;
+        return false;
+    }
+    size_t i, j;
+    if (index || header) {
+        if (index)
+            outputFile << "Index" << delimiter;
+        for (int i = 0; i < this->columns.size() - 1; ++i)
+            outputFile << this->columns[i] << delimiter;
+        outputFile << this->columns[columns.size() - 1] << std::endl;
+    }
+    for (i = 0; i < this->data.rows(); i++) {
+        if (index)
+            outputFile << this->index[i] << delimiter;
+        for (j = 0; j < this->data.cols() - 1; j++) {
+            outputFile << this->data(i, j) << delimiter;
+        }
+        outputFile << this->data(i, this->data.cols() - 1) << std::endl;
+    }
+    return true;
+}
 //
 ostream& operator<<(ostream& os, const DataFrame& df){
     os << "Matrix: " << df.index.size() << " X " << df.columns.size() << endl;

@@ -25,8 +25,8 @@ VectorXd Algorithm::column_operate(const MatrixXd& matrix, int col1, int col2, s
  * @param y 
  * @return correlation coefficient 
  */
-double Algorithm::pearson(const VectorXd& x, const VectorXd& y) {
-    // "The size of x and y must be the same."
+double Algorithm::calculatePearsonCorrelation(const VectorXd& x, const VectorXd& y) {
+    // The size of x and y must be the same.
     assert(x.size() == y.size());
     double mean_x = x.mean();
     double mean_y = y.mean();
@@ -35,8 +35,75 @@ double Algorithm::pearson(const VectorXd& x, const VectorXd& y) {
     double std_y = sqrt(((y.array() - mean_y) * (y.array() - mean_y)).mean());
     double pearson_corr = cov_xy / (std_x * std_y);
     return pearson_corr;
-};
+}
 
+double Algorithm::calculatePearsonCorrelationWithNaN(const VectorXd& x, const VectorXd& y) {
+    assert(x.size() == y.size());
+
+    double sumX = 0, sumY = 0;
+    double sumXSq = 0, sumYSq = 0;
+    double sumXY = 0;
+    int count = 0;
+
+    for (int i = 0; i < x.size(); ++i) {
+        if (std::isnan(x[i]) || std::isnan(y[i])) continue;
+        sumX += x[i];
+        sumY += y[i];
+        sumXSq += x[i] * x[i];
+        sumYSq += y[i] * y[i];
+        sumXY += x[i] * y[i];
+        count++;
+    }
+
+    if (count < 2) {
+        return std::numeric_limits<double>::quiet_NaN();
+    }
+
+    double meanX = sumX / count;
+    double meanY = sumY / count;
+    double covariance = (sumXY / count - meanX * meanY);
+    double varianceX = (sumXSq / count - meanX * meanX);
+    double varianceY = (sumYSq / count - meanY * meanY);
+
+    if (varianceX == 0 || varianceY == 0) {
+        return std::numeric_limits<double>::quiet_NaN(); // Avoid division by zero
+    }
+
+    return covariance / (std::sqrt(varianceX) * std::sqrt(varianceY));
+}
+
+double Algorithm::calculatePearsonCorrelationVectorized(const Eigen::VectorXd& x, const Eigen::VectorXd& y) {
+    assert(x.size() == y.size());
+
+    // 计算有效元素的数量
+    Eigen::Array<bool, Eigen::Dynamic, 1> mask = (x.array().isNaN() + y.array().isNaN()) == 0;
+    int count = mask.count();
+    if (count < 2) {
+        return std::numeric_limits<double>::quiet_NaN();
+    }
+
+    Eigen::VectorXd new_x = mask.select(x, 0);
+    Eigen::VectorXd new_y = mask.select(y, 0);
+    // 使用mask进行过滤计算
+    double sumX = new_x.array().sum();
+    double sumY = new_y.array().sum();
+    double sumXSq = new_x.array().square().sum();
+    double sumYSq = new_y.array().square().sum();
+    double sumXY = (new_x.array() * new_y.array()).sum();
+
+    double meanX = sumX / count;
+    double meanY = sumY / count;
+
+    double covariance = (sumXY - sumX * meanY) / count;
+    double varianceX = (sumXSq - sumX * meanX) / count;
+    double varianceY = (sumYSq - sumY * meanY) / count;
+    
+    if (varianceX == 0 || varianceY == 0) {
+        return std::numeric_limits<double>::quiet_NaN(); // Avoid division by zero
+    }
+
+    return covariance / (std::sqrt(varianceX) * std::sqrt(varianceY));
+}
 /**
  * @brief Calculate the Spearman correlation coefficient of two vectors
  * 
@@ -44,7 +111,7 @@ double Algorithm::pearson(const VectorXd& x, const VectorXd& y) {
  * @param y 
  * @return correlation coefficient 
  */
-double Algorithm::spearman(const VectorXd& x, const VectorXd& y) {
+double Algorithm::calculateSpearmanCorrelation(const VectorXd& x, const VectorXd& y) {
     VectorXd rank_x = x;
     VectorXd rank_y = y;
     // Calculate ranks
@@ -57,7 +124,7 @@ double Algorithm::spearman(const VectorXd& x, const VectorXd& y) {
     std::sort(index.begin(), index.end(), [&](int i, int j) { return y(i) < y(j); });
     for (int i = 0; i < y.size(); ++i)
         rank_y(index[i]) = i;
-    return pearson(rank_x, rank_y);
+    return calculatePearsonCorrelation(rank_x, rank_y);
 }
 
 /**
@@ -67,7 +134,7 @@ double Algorithm::spearman(const VectorXd& x, const VectorXd& y) {
  * @param y vector
  * @return correlation coefficient 
 */
-double Algorithm::kendall(const VectorXd& x, const VectorXd& y) {
+double Algorithm::calculateKendallCorrelation(const VectorXd& x, const VectorXd& y) {
     int n = x.size();
     int P = 0, Q = 0;
 

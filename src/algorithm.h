@@ -5,6 +5,7 @@
 #include <tuple>
 #include <vector>
 #include <string>
+#include <limits>
 
 #include <Eigen/Dense>
 
@@ -20,9 +21,11 @@ typedef tuple<string, string, double> GenePair;
 namespace Algorithm {
 
     // functions
-    double spearman(const VectorXd& x, const VectorXd& y);
-    double pearson(const VectorXd& x, const VectorXd& y);
-    double kendall(const VectorXd& x, const VectorXd& y);
+    double calculatePearsonCorrelation(const VectorXd& x, const VectorXd& y);
+    double calculatePearsonCorrelationWithNaN(const VectorXd& x, const VectorXd& y);
+    double calculatePearsonCorrelationVectorized(const VectorXd& x, const VectorXd& y);
+    double calculateSpearmanCorrelation(const VectorXd& x, const VectorXd& y);
+    double calculateKendallCorrelation(const VectorXd& x, const VectorXd& y);
 
     VectorXd column_operate(const MatrixXd& matrix, int col1, int col2, std::string op);
 }

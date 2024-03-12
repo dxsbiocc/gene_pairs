@@ -20,11 +20,11 @@ CorrPairs::CorrPairs(CorrOptions *opts) {
         target = new DataFrame(options->target);
     // correlation algorithm
     if (options->method == "pearson") {
-        func = Algorithm::pearson;
+        func = &Algorithm::calculatePearsonCorrelationWithNaN;
     } else if (options->method == "spearman") {
-        func = Algorithm::spearman;
+        func = &Algorithm::calculateSpearmanCorrelation;
     } else if (options->method == "kendall") {
-        func = Algorithm::kendall;
+        func = &Algorithm::calculateKendallCorrelation;
     } else {
         throw std::invalid_argument("Invalid method." + options->method);
     }
@@ -78,8 +78,8 @@ bool CorrPairs::getCommonPairs() {
     for (i = 0; i < source->data.cols(); ++i) {
         for (j = 0; j < source->data.cols(); ++j) {
             if (j <= i) continue;
-            corr = static_cast<int>(std::round(func(source->data.col(i), source->data.col(j)) * 1000));
-            if (abs(corr) > threshold) {
+            corr = static_cast<int>(std::round(this->func(source->data.col(i), source->data.col(j)) * 1000));
+            if (!std::isnan(corr) && abs(corr) > threshold) {
                 #pragma omp critical
                 pairs.push_back({i, j, corr});
             }
@@ -107,8 +107,11 @@ bool CorrPairs::getCrossPairs() {
     #pragma omp parallel for collapse(2) private(i, j, corr) schedule(static, options->block)
     for (i = 0; i < source->data.cols(); ++i) {
         for (j = 0; j < target->data.cols(); ++j) {
-            corr = static_cast<int>(std::round(func(source->data.col(i), target->data.col(j)) * 1000));
-            if (abs(corr) > threshold) {
+            if (source->columns[i] == "TSPAN6 (7105)" && target->columns[j] == "ML210") {
+                std::cout << target->data(26, j);
+            }
+            corr = static_cast<int>(std::round(this->func(source->data.col(i), target->data.col(j)) * 1000));
+            if (!std::isnan(corr) && abs(corr) > threshold) {
                 #pragma omp critical
                 pairs.push_back({i, j, corr});
             }
@@ -144,8 +147,8 @@ bool CorrPairs::getPairsCross() {
                     std::cout << "[Pairs Cross] - Feature: " << target->columns[k] << std::endl;
                 }
                 res = Algorithm::column_operate(source->data, i, j, options->operation);
-                corr = static_cast<int>(std::round(func(res, target->data.col(k)) * 1000));
-                if (!isnan(corr) && abs(corr) > threshold)
+                corr = static_cast<int>(std::round(this->func(res, target->data.col(k)) * 1000));
+                if (!std::isnan(corr) && abs(corr) > threshold)
                     #pragma omp critical
                     {
                         pairs.push_back({k, i, j, corr});

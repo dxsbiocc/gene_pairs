@@ -37,6 +37,7 @@ public:
     DataFrame(const MatrixXd& data, const vector<string>& index, const vector<string>& columns);
     // 从文件中读取数据
     bool read_csv(const string& filename, const char delimiter=',', bool header=true, bool index=true);
+    bool to_csv(const string& filename, const char delimiter=',', bool header=true, bool index=true);
     // 运算符重载
     friend ostream& operator<<(ostream& os, const DataFrame& df);
     friend DataFrame operator+(DataFrame& df, const DataFrame& other);
